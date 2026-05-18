@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin — BPOM Lubuklinggau</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body class="dashboard-body">
+
+<div class="dash-layout">
+
+    <!-- ── SIDEBAR ──────────────────────────────────── -->
+    <aside class="dash-sidebar">
+        <div class="dash-brand">
+            <img
+                src="{{ url_for('static', filename='img/logo_bpom.png') }}"
+                alt="Logo BPOM Lubuklinggau"
+                class="dash-brand-logo"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <svg viewBox="0 0 40 40" fill="none" style="display:none">
+                <circle cx="20" cy="20" r="20" fill="#007B5E"/>
+                <path d="M10 20 C10 14.5 14.5 10 20 10 C25.5 10 30 14.5 30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M10 20 C10 25.5 14.5 30 20 30 C25.5 30 30 25.5 30 20" stroke="#A8E6CF" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="20" cy="20" r="4" fill="white"/>
+            </svg>
+            <div>
+                <span class="dash-brand-title">BPOM Lubuklinggau</span>
+                <span class="dash-brand-sub">Admin Dashboard</span>
+            </div>
+        </div>
+
+        <!-- Statistik ringkas -->
+        <div class="dash-stats" id="dashStats">
+            <div class="stat-card">
+                <span class="stat-num" id="statTotal">0</span>
+                <span class="stat-label">Total Sesi</span>
+            </div>
+            <div class="stat-card stat-web">
+                <span class="stat-num" id="statWeb">0</span>
+                <span class="stat-label">🌐 Web</span>
+            </div>
+            <div class="stat-card stat-tg">
+                <span class="stat-num" id="statTg">0</span>
+                <span class="stat-label">✈️ Telegram</span>
+            </div>
+            <div class="stat-card stat-msg">
+                <span class="stat-num" id="statMsgs">0</span>
+                <span class="stat-label">Pesan</span>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="filter-row">
+            <button class="filter-btn active" data-filter="all">Semua</button>
+            <button class="filter-btn" data-filter="web">Web</button>
+            <button class="filter-btn" data-filter="telegram">Telegram</button>
+        </div>
+
+        <!-- Daftar sesi -->
+        <div class="session-list" id="sessionList">
+            <div class="sessions-empty">
+                <div style="font-size:2rem">💬</div>
+                <p>Belum ada sesi aktif</p>
+            </div>
+        </div>
+
+        <a href="/" class="back-link">← Kembali ke Chatbot</a>
+    </aside>
+
+    <!-- ── AREA UTAMA ─────────────────────────────── -->
+    <main class="dash-main">
+
+        <!-- Placeholder saat tidak ada sesi dipilih -->
+        <div class="no-session" id="noSession">
+            <div class="no-session-icon">🖥️</div>
+            <h2>Pilih sesi untuk memulai</h2>
+            <p>Klik salah satu sesi di panel kiri untuk melihat<br>percakapan dan membalas pesan.</p>
+            <div class="ws-status" id="wsStatus">
+                <span class="ws-dot disconnected"></span>
+                <span id="wsStatusText">Menghubungkan ke server…</span>
+            </div>
+        </div>
+
+        <!-- Panel percakapan -->
+        <div class="chat-panel" id="chatPanel" style="display:none">
+
+            <div class="chat-panel-header">
+                <div class="session-meta">
+                    <span class="session-source-badge" id="panelSource">web</span>
+                    <div>
+                        <p class="panel-session-id" id="panelSessionId">—</p>
+                        <p class="panel-session-time" id="panelSessionTime">—</p>
+                    </div>
+                </div>
+                <div class="ws-status">
+                    <span class="ws-dot" id="wsDot"></span>
+                    <span id="wsStatusPanel">WebSocket</span>
+                </div>
+            </div>
+
+            <div class="panel-messages" id="panelMessages"></div>
+
+            <div class="panel-reply">
+                <div class="reply-wrapper">
+                    <input
+                        type="text"
+                        id="replyInput"
+                        placeholder="Ketik balasan manual sebagai Admin BPOM Lubuklinggau…"
+                        maxlength="1000"
+                        autocomplete="off"
+                    />
+                    <button id="replyBtn" class="reply-send-btn">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="reply-hint">Balasan ini dikirim langsung ke pengguna (web/Telegram)</p>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let socket;
+let currentFilter  = "all";
+let activeSessionId = null;
+let allSessions    = {};
+let newMsgCounts   = {};
+
+// ═══════════════════════════════════════════════════════════════
+//  WEBSOCKET
+// ═══════════════════════════════════════════════════════════════
+function initSocket() {
+    socket = io({ transports: ["websocket", "polling"] });
+
+    socket.on("connect", () => {
+        socket.emit("join_dashboard");
+        setWsStatus(true);
+        showToast("✅ Terhubung ke server real-time", "success");
+    });
+
+    socket.on("disconnect", () => {
+        setWsStatus(false);
+        showToast("⚠️ Koneksi terputus, mencoba ulang…", "warning");
+    });
+
+    // ── FIX: Pesan web baru — tidak lagi memanggil appendMessage untuk bot_response null ──
+    socket.on("new_web_message", (data) => {
+        updateOrAddSession(data.session_id, "web", data.user_message, data.timestamp);
+        if (activeSessionId === data.session_id) {
+            // Hanya tampilkan pesan user — TIDAK appendMessage untuk bot_response
+            appendMessage("user", data.user_message, data.timestamp, "web");
+        } else {
+            bumpUnread(data.session_id);
+            showToast(`🌐 Pesan web baru dari ${data.session_id.slice(0,8)}…`, "info");
+        }
+        refreshStats();
+    });
+
+    // ── Pesan Telegram baru masuk ──
+    socket.on("new_telegram_message", (data) => {
+        updateOrAddSession(data.session_id, "telegram", data.user_message, data.timestamp, data.username);
+        if (activeSessionId === data.session_id) {
+            appendMessage("user", data.user_message, data.timestamp, "telegram", data.username);
+        } else {
+            bumpUnread(data.session_id);
+            showToast(`✈️ @${data.username}: ${data.user_message.slice(0,50)}`, "telegram");
+        }
+        refreshStats();
+    });
+
+    // ── Balasan admin berhasil ──
+    socket.on("session_updated", (data) => {
+        if (allSessions[data.session_id]) {
+            allSessions[data.session_id].last_message = data.last_message;
+            allSessions[data.session_id].last_active  = data.last_active;
+            renderSessionList();
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATS & SESSIONS
+// ═══════════════════════════════════════════════════════════════
+async function refreshStats() {
+    try {
+        const r = await fetch("/api/dashboard/stats");
+        const d = await r.json();
+        document.getElementById("statTotal").textContent = d.total_sessions;
+        document.getElementById("statWeb").textContent   = d.web_sessions;
+        document.getElementById("statTg").textContent    = d.telegram_sessions;
+        document.getElementById("statMsgs").textContent  = d.total_messages;
+    } catch (_) {}
+}
+
+async function loadSessions() {
+    try {
+        const r    = await fetch("/api/dashboard/sessions");
+        const list = await r.json();
+        allSessions = {};
+        list.forEach(s => { allSessions[s.id] = s; });
+        renderSessionList();
+    } catch (_) {}
+}
+
+function updateOrAddSession(id, source, lastMsg, time, username) {
+    if (!allSessions[id]) {
+        allSessions[id] = { id, source, last_message: lastMsg, last_active: time, message_count: 1, username };
+    } else {
+        allSessions[id].last_message   = lastMsg;
+        allSessions[id].last_active    = time;
+        allSessions[id].message_count  = (allSessions[id].message_count || 0) + 1;
+        if (username) allSessions[id].username = username;
+    }
+    renderSessionList();
+}
+
+function bumpUnread(id) {
+    newMsgCounts[id] = (newMsgCounts[id] || 0) + 1;
+    renderSessionList();
+}
+
+function renderSessionList() {
+    const list = document.getElementById("sessionList");
+    const sessions = Object.values(allSessions)
+        .filter(s => currentFilter === "all" || s.source === currentFilter)
+        .sort((a, b) => (b.last_active || "").localeCompare(a.last_active || ""));
+
+    if (sessions.length === 0) {
+        list.innerHTML = `<div class="sessions-empty"><div style="font-size:2rem">💬</div><p>Tidak ada sesi</p></div>`;
+        return;
+    }
+
+    list.innerHTML = sessions.map(s => {
+        const isActive   = s.id === activeSessionId;
+        const badge      = s.source === "telegram" ? "✈️ TG" : "🌐 Web";
+        const badgeClass = s.source === "telegram" ? "tg" : "web";
+        const unread     = newMsgCounts[s.id] || 0;
+        const label      = s.username
+            ? `@${s.username}`
+            : (s.source === "telegram" ? s.id.slice(0, 12) + "…" : "🌐 " + s.id.slice(0, 10) + "…");
+        return `
+        <div class="session-item ${isActive ? "active" : ""}" data-id="${s.id}" onclick="selectSession('${s.id}')">
+            <div class="si-top">
+                <span class="source-badge ${badgeClass}">${badge}</span>
+                <span class="si-label">${label}</span>
+                ${unread > 0 ? `<span class="unread-dot">${unread}</span>` : ""}
+            </div>
+            <p class="si-preview">${escHtml(s.last_message || "—").slice(0, 55)}</p>
+            <span class="si-time">${s.last_active || ""}</span>
+        </div>`;
+    }).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SELECT SESSION
+// ═══════════════════════════════════════════════════════════════
+async function selectSession(id) {
+    activeSessionId    = id;
+    newMsgCounts[id]   = 0;
+    renderSessionList();
+
+    document.getElementById("noSession").style.display  = "none";
+    document.getElementById("chatPanel").style.display  = "flex";
+
+    const sess   = allSessions[id];
+    const uname  = sess?.username ? `@${sess.username}` : id.slice(0, 16) + "…";
+    document.getElementById("panelSessionId").textContent  = uname;
+    document.getElementById("panelSessionTime").textContent = "Aktif: " + (sess?.last_active || "—");
+
+    const srcBadge       = document.getElementById("panelSource");
+    srcBadge.textContent = sess?.source === "telegram" ? "✈️ Telegram" : "🌐 Web";
+    srcBadge.className   = "session-source-badge " + (sess?.source || "web");
+
+    // Muat riwayat pesan
+    try {
+        const r    = await fetch(`/api/dashboard/session/${id}`);
+        const data = await r.json();
+        const msgs = document.getElementById("panelMessages");
+        msgs.innerHTML = "";
+        const sessUsername = allSessions[id]?.username || "";
+        (data.messages || []).forEach(m => {
+            // Jangan render pesan kosong atau null
+            if (m.text && m.text.trim()) {
+                appendMessage(m.role, m.text, m.timestamp, m.source, sessUsername);
+            }
+        });
+    } catch (e) {
+        console.error("Gagal load sesi:", e);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MESSAGES
+// ═══════════════════════════════════════════════════════════════
+function appendMessage(role, text, time, source, username) {
+    // Guard: jangan render jika text kosong atau null
+    if (!text || !text.trim()) return;
+
+    const container = document.getElementById("panelMessages");
+    if (!container) return;
+
+    const div      = document.createElement("div");
+    div.className  = `pm-row ${role}`;
+
+    const srcIcon  = source === "telegram" ? "✈️" : "🌐";
+    let roleLabel;
+    if (role === "user") {
+        const name = username ? `@${username}` : "Pengguna";
+        roleLabel  = `👤 ${name}`;
+    } else if (role === "admin") {
+        roleLabel  = "👨‍💼 Admin BPOM Lubuklinggau";
+    } else {
+        roleLabel  = "🤖 Bot";
+    }
+
+    div.innerHTML = `
+        <div class="pm-meta">${roleLabel} ${srcIcon} <span>${time || ""}</span></div>
+        <div class="pm-bubble">${escHtml(text)}</div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REPLY
+// ═══════════════════════════════════════════════════════════════
+async function sendReply() {
+    if (!activeSessionId) return;
+    const input = document.getElementById("replyInput");
+    const msg   = input.value.trim();
+    if (!msg) return;
+
+    input.value      = "";
+    const btn        = document.getElementById("replyBtn");
+    btn.disabled     = true;
+
+    try {
+        const r = await fetch("/api/dashboard/reply", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ session_id: activeSessionId, message: msg }),
+        });
+        const d = await r.json();
+        if (d.status === "ok") {
+            appendMessage(
+                "admin", msg,
+                new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+                "dashboard"
+            );
+            showToast("✅ Balasan terkirim", "success");
+        } else {
+            showToast("❌ Gagal mengirim: " + (d.error || "error"), "error");
+        }
+    } catch (e) {
+        showToast("❌ Koneksi error", "error");
+    }
+    btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setWsStatus(connected) {
+    const dot1  = document.getElementById("wsDot");
+    const txt1  = document.getElementById("wsStatusPanel");
+    const dot2  = document.querySelector("#wsStatus .ws-dot");
+    const txt2  = document.getElementById("wsStatusText");
+    const cls   = connected ? "connected" : "disconnected";
+    const label = connected ? "Real-time aktif" : "Terputus";
+    if (dot1) { dot1.className = "ws-dot " + cls; txt1.textContent = label; }
+    if (dot2) { dot2.className = "ws-dot " + cls; txt2.textContent = label; }
+}
+
+function showToast(msg, type = "info") {
+    const c = document.getElementById("toastContainer");
+    const t = document.createElement("div");
+    t.className   = `toast toast-${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    requestAnimationFrame(() => t.classList.add("show"));
+    setTimeout(() => {
+        t.classList.remove("show");
+        setTimeout(() => t.remove(), 400);
+    }, 3500);
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded", () => {
+    initSocket();
+    loadSessions();
+    refreshStats();
+    setInterval(loadSessions, 15000);
+    setInterval(refreshStats, 10000);
+
+    document.getElementById("replyBtn").addEventListener("click", sendReply);
+    document.getElementById("replyInput").addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); }
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentFilter = btn.dataset.filter;
+            renderSessionList();
+        });
+    });
+});
+</script>
+</body>
+</html>

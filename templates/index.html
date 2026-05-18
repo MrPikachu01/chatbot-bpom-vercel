@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot BPOM Lubuklinggau</title>
+    <meta name="bpom-session-id" content="{{ session.get('session_id', '') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- MAIN APP WRAPPER -->
+<div class="app-wrapper">
+
+    <!-- SIDEBAR / INFO PANEL -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo">
+                <img src="{{ url_for('static', filename='img/logo_bpom.png') }}"
+                     alt="Logo BPOM Lubuklinggau"
+                     style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;"
+                />
+            </div>
+            <div class="brand-text">
+                <span class="brand-title">BPOM</span>
+                <span class="brand-sub">Lubuklinggau</span>
+            </div>
+        </div>
+
+        <div class="sidebar-nav">
+            <p class="nav-label">Menu Cepat</p>
+            <nav>
+                <a href="#" class="nav-item active" data-action="home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Beranda
+                </a>
+                <a href="#" class="nav-item" data-action="registrasi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Registrasi
+                </a>
+                <a href="#" class="nav-item" data-action="layanan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                    Layanan
+                </a>
+                <a href="#" class="nav-item" data-action="cek_produk">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    Cek Produk
+                </a>
+                <a href="#" class="nav-item" data-action="pengaduan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Pengaduan
+                </a>
+                <a href="#" class="nav-item" data-action="kontak">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.09 6.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    Kontak
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-info">
+            <div class="info-card">
+                <div class="info-icon">☎️</div>
+                <div>
+                    <p class="info-title">Hotline BPOM</p>
+                    <p class="info-value">1500533</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">⏰</div>
+                <div>
+                    <p class="info-title">Jam Pelayanan</p>
+                    <p class="info-value">Sen-Kam 08.00-16.00</p>
+                    <p class="info-value">Jum     08.00-16.30</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CHAT MAIN AREA -->
+    <main class="chat-container">
+
+        <!-- CHAT HEADER -->
+        <header class="chat-header">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="header-agent">
+                <div class="agent-avatar">
+                    <img src="{{ url_for('static', filename='img/logo_bpom_avatar.png') }}"
+                         alt="BPOM Lubuklinggau"
+                         style="width:40px;height:40px;object-fit:contain;border-radius:50%;background:#fff;padding:3px;"
+                    />
+                    <span class="online-dot"></span>
+                </div>
+                <div class="agent-info">
+                    <p class="agent-name">BPOM Lubuklinggau</p>
+                    <p class="agent-status">
+                        <span class="status-pulse"></span>
+                        Online sekarang
+                    </p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="action-btn" id="resetBtn" title="Reset percakapan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                </button>
+                <a href="https://lubuklinggau.pom.go.id/" target="_blank" class="action-btn" title="Website BPOM">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- MESSAGES AREA -->
+        <div class="messages-wrapper" id="messagesWrapper">
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages injected here by JS -->
+            </div>
+        </div>
+
+        <!-- TYPING INDICATOR -->
+        <div class="typing-indicator" id="typingIndicator" style="display:none">
+            <div class="typing-avatar">
+                <img src="{{ url_for('static', filename='img/logo_bpom_avatar.png') }}"
+                     alt="BPOM"
+                     style="width:28px;height:28px;object-fit:contain;border-radius:50%;background:#fff;padding:2px;"
+                />
+            </div>
+            <div class="typing-bubble">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input
+                    type="text"
+                    id="userInput"
+                    placeholder="Ketik pesan Anda..."
+                    autocomplete="off"
+                    maxlength="500"
+                />
+                <button class="send-btn" id="sendBtn">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="input-hint">Tekan Enter untuk mengirim • Dikelola oleh BPOM Lubuklinggau</p>
+        </div>
+
+    </main>
+</div>
+
+<!-- OVERLAY for mobile sidebar -->
+<div class="overlay" id="overlay"></div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat_ws_patch.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Gunakan file ini jika hanya menjalankan app.py (tanpa WebSocket/Telegram)
+Flask==3.0.3
+Werkzeug==3.0.3
+requests==2.31.0
