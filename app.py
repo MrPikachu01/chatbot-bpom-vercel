@@ -645,7 +645,7 @@ def telegram_webhook():
 response = get_bot_response(text, session_data)
 
 if isinstance(response, dict):
-    telegram_text = response.get("message", "Tidak ada pesan")
+    telegram_text = response.get("message") or response.get("text") or "Tidak ada pesan"
 else:
     telegram_text = str(response)
 
