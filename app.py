@@ -641,7 +641,8 @@ def telegram_webhook():
         chat_id = data["message"]["chat"]["id"]
         text = data["message"].get("text", "")
 
-        response = get_bot_response(text)
+        session_data = {}
+        response = get_bot_response(text, session_data)
 
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
