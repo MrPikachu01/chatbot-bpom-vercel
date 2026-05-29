@@ -3,9 +3,12 @@ from datetime import datetime
 import uuid
 import re
 import os
+import requests
 
 app = Flask(__name__)
 app.secret_key = "bpom_lubuklinggau_secret_2024"
+BOT_TOKEN = "8741328752:AAGrDb6hfydbvpHKozUSKl4CX7lkw26wts0"
+os.environ.get("BOT_TOKEN")
 
 # =============================================
 # DATA PENGETAHUAN BPOM LUBUKLINGGAU
@@ -630,6 +633,25 @@ def welcome():
         "timestamp": datetime.now().strftime("%H:%M"),
     })
 
+@app.route("/webhook", methods=["POST"])
+def telegram_webhook():
+    data = request.get_json()
+
+    if data and "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "")
+
+        response = get_bot_response(text)
+
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": response
+            }
+        )
+
+    return "OK", 200
 
 if __name__ == "__main__":
     print("=" * 50)

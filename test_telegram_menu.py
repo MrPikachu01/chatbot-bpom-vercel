@@ -10,7 +10,7 @@ import json
 import sys
 
 # ── Ganti dengan token bot Anda ──────────────────────────────────────────────
-TOKEN   = "8741328752:AAF2lZpn3eaA4a-nFbNAAcRdfywXHjgY2K4"
+TOKEN   = "8741328752:AAGrDb6hfydbvpHKozUSKl4CX7lkw26wts0"
 API_URL = f"https://api.telegram.org/bot{TOKEN}"
 # ─────────────────────────────────────────────────────────────────────────────
 
