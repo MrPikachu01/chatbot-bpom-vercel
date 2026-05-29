@@ -640,22 +640,11 @@ def telegram_webhook():
         chat_id = data["message"]["chat"]["id"]
         text = data["message"].get("text", "")
 
-        session_data = {}
-        response = get_bot_response(text, session_data)
-        
-        print("TEXT MASUK:", text)
-        print("RESPONSE:", response)
-
-        if isinstance(response, dict):
-            telegram_text = response.get("message") or response.get("text") or "Tidak ada pesan"
-        else:
-            telegram_text = str(response)
-
         requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": chat_id,
-                "text": telegram_text
+                "text": "Halo, bot Telegram BPOM sudah aktif dan bisa membalas pesan."
             }
         )
 
