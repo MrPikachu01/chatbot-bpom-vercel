@@ -7,8 +7,7 @@ import requests
 
 app = Flask(__name__)
 app.secret_key = "bpom_lubuklinggau_secret_2024"
-BOT_TOKEN = "8741328752:AAGrDb6hfydbvpHKozUSKl4CX7lkw26wts0"
-os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("BOT_TOKEN","8741328752:AAGrDb6hfydbvpHKozUSKl4CX7lkw26wts0,")
 
 # =============================================
 # DATA PENGETAHUAN BPOM LUBUKLINGGAU
